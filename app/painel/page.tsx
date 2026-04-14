@@ -1,17 +1,31 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 interface User { id: string; email: string; nome: string; plano: string; plano_expira?: string }
 interface Doc { id: string; tipo: string; tipo_nome: string; pago: boolean; criado_em: string }
 
-export default function PainelPage() {
+function PainelContent() {
   const [user, setUser] = useState<User | null>(null)
   const [docs, setDocs] = useState<Doc[]>([])
   const [docsMes, setDocsMes] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [paymentMsg, setPaymentMsg] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const payment = searchParams.get('payment')
+    if (payment === 'success') setPaymentMsg('Pagamento aprovado! Seu plano foi ativado.')
+    else if (payment === 'pending') setPaymentMsg('Pagamento pendente. Sera ativado assim que confirmado.')
+    else if (payment === 'failure') setPaymentMsg('Pagamento nao foi concluido. Tente novamente.')
+    if (payment) {
+      const timer = setTimeout(() => setPaymentMsg(''), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const token = localStorage.getItem('cai_token')
@@ -47,6 +61,20 @@ export default function PainelPage() {
 
   const isMensal = user.plano === 'mensal' && user.plano_expira && new Date(user.plano_expira) > new Date()
 
+  const assinarMensal = async () => {
+    const token = localStorage.getItem('cai_token')
+    if (!token) return
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan: 'mensal' }),
+      })
+      const data = await res.json()
+      if (data.init_point) window.location.href = data.init_point
+    } catch {}
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Nav */}
@@ -67,6 +95,12 @@ export default function PainelPage() {
       </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
+        {/* Payment feedback */}
+        {paymentMsg && (
+          <div style={{ padding: '12px 20px', marginBottom: 20, borderRadius: 12, background: paymentMsg.includes('aprovado') ? 'rgba(34,197,94,0.1)' : paymentMsg.includes('pendente') ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${paymentMsg.includes('aprovado') ? 'rgba(34,197,94,0.25)' : paymentMsg.includes('pendente') ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)'}`, color: paymentMsg.includes('aprovado') ? '#22c55e' : paymentMsg.includes('pendente') ? '#f59e0b' : '#f87171', fontSize: 14, fontWeight: 500 }}>
+            {paymentMsg}
+          </div>
+        )}
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
@@ -99,8 +133,8 @@ export default function PainelPage() {
             Novo documento
           </Link>
           {!isMensal && (
-            <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid var(--border-strong)', color: 'var(--blue-light)', fontSize: 14, fontWeight: 600 }}>
-              Assinar Mensal — R$34,90/mês
+            <button onClick={assinarMensal} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid var(--border-strong)', color: 'var(--blue-light)', fontSize: 14, fontWeight: 600 }}>
+              Assinar Mensal — R$34,90/mes
             </button>
           )}
         </div>
@@ -134,5 +168,13 @@ export default function PainelPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PainelPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--blue)', animation: 'spin 1s linear infinite' }} /><style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style></div>}>
+      <PainelContent />
+    </Suspense>
   )
 }
