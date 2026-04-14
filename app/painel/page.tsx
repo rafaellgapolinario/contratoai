@@ -89,8 +89,10 @@ function PainelContent() {
             <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: isMensal ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.06)', color: isMensal ? 'var(--blue-light)' : 'var(--text3)' }}>
               {isMensal ? 'Mensal' : 'Free'}
             </span>
-            {user.email === 'gardaszconsultoria@gmail.com' && (
-              <Link href="/admin" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: 'rgba(239,68,68,0.15)', color: '#f87171' }}>ADMIN</Link>
+            {(user.email === 'gardaszconsultoria@gmail.com' || user.email === 'murilodesaferreira@gmail.com') && (
+              <Link href="/admin" style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: user.email === 'gardaszconsultoria@gmail.com' ? 'rgba(168,85,247,0.15)' : 'rgba(239,68,68,0.15)', color: user.email === 'gardaszconsultoria@gmail.com' ? '#a855f7' : '#f87171' }}>
+                {user.email === 'gardaszconsultoria@gmail.com' ? 'MASTER' : 'ADMIN'}
+              </Link>
             )}
             <button onClick={logout} style={{ fontSize: 13, color: 'var(--text3)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)' }}>Sair</button>
           </div>
@@ -138,6 +140,10 @@ function PainelContent() {
           <Link href="/chat" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', color: 'var(--cyan)', fontSize: 14, fontWeight: 600 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Consulta Juridica
+          </Link>
+          <Link href="/modelos" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 600 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Meus Modelos
           </Link>
           {!isMensal && (
             <button onClick={assinarMensal} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid var(--border-strong)', color: 'var(--blue-light)', fontSize: 14, fontWeight: 600 }}>

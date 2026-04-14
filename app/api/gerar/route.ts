@@ -42,22 +42,105 @@ const TEMPLATES: Record<string, { nome: string; campos: string[] }> = {
     nome: 'Recibo de Pagamento',
     campos: ['Nome de quem recebeu', 'CPF/CNPJ de quem recebeu', 'Nome de quem pagou', 'CPF/CNPJ de quem pagou', 'Valor recebido (R$)', 'Referente a (descrição)', 'Forma de pagamento', 'Data do pagamento', 'Cidade/Estado'],
   },
+  // --- Pecas judiciais ---
+  'peticao-inicial': {
+    nome: 'Petição Inicial',
+    campos: ['Nome completo do autor', 'CPF/CNPJ do autor', 'Endereço do autor', 'Nome completo do réu', 'CPF/CNPJ do réu', 'Endereço do réu', 'Tipo de ação (ex: cobrança, indenização, obrigação de fazer)', 'Descrição dos fatos', 'Fundamentos jurídicos (leis aplicáveis)', 'Pedidos (o que deseja do juiz)', 'Valor da causa (R$)', 'Provas que pretende produzir', 'Comarca/Foro'],
+  },
+  'contestacao': {
+    nome: 'Contestação',
+    campos: ['Nome completo do réu/contestante', 'CPF/CNPJ do réu', 'Nome do autor da ação', 'Número do processo', 'Vara/Comarca', 'Resumo da ação original', 'Argumentos de defesa', 'Fatos que contesta', 'Fundamentos jurídicos da defesa', 'Provas que pretende produzir', 'Pedidos (improcedência, etc)'],
+  },
+  'recurso-apelacao': {
+    nome: 'Recurso de Apelação',
+    campos: ['Nome do apelante', 'CPF/CNPJ do apelante', 'Nome do apelado', 'Número do processo', 'Vara/Comarca de origem', 'Resumo da sentença recorrida', 'Pontos que contesta na sentença', 'Fundamentos jurídicos do recurso', 'Pedidos (reforma total/parcial)', 'Tribunal de destino'],
+  },
+  'notificacao-extrajudicial': {
+    nome: 'Notificação Extrajudicial',
+    campos: ['Nome do notificante', 'CPF/CNPJ do notificante', 'Endereço do notificante', 'Nome do notificado', 'CPF/CNPJ do notificado', 'Endereço do notificado', 'Assunto da notificação', 'Descrição detalhada dos fatos', 'O que está sendo exigido/solicitado', 'Prazo para cumprimento (dias)', 'Consequências do não cumprimento', 'Cidade/Estado'],
+  },
+  'procuracao': {
+    nome: 'Procuração',
+    campos: ['Nome do outorgante (quem concede)', 'CPF/CNPJ do outorgante', 'Endereço do outorgante', 'Estado civil do outorgante', 'Nome do outorgado (procurador)', 'CPF do outorgado', 'OAB do outorgado (se advogado)', 'Poderes concedidos (amplos/específicos)', 'Finalidade da procuração', 'Prazo de validade', 'Cidade/Estado'],
+  },
+  'declaracao': {
+    nome: 'Declaração',
+    campos: ['Nome completo do declarante', 'CPF/CNPJ do declarante', 'Endereço do declarante', 'Conteúdo da declaração (o que está declarando)', 'Finalidade da declaração (para quem/para quê)', 'Cidade/Estado'],
+  },
+  'acordo-trabalhista': {
+    nome: 'Acordo Trabalhista Extrajudicial',
+    campos: ['Nome do empregador', 'CNPJ do empregador', 'Nome do empregado', 'CPF do empregado', 'Cargo/função', 'Data de admissão', 'Data de desligamento', 'Motivo do desligamento', 'Verbas rescisórias acordadas (R$)', 'Forma de pagamento das verbas', 'Cláusula de quitação (parcial/total)', 'Cidade/Estado'],
+  },
+  'contrato-social': {
+    nome: 'Contrato Social (Abertura de Empresa)',
+    campos: ['Nome da empresa', 'Tipo societário (LTDA, MEI, S.A.)', 'CNAE principal (atividade)', 'Endereço da sede', 'Capital social (R$)', 'Nome do Sócio 1', 'CPF do Sócio 1', 'Participação do Sócio 1 (%)', 'Nome do Sócio 2', 'CPF do Sócio 2', 'Participação do Sócio 2 (%)', 'Administrador(es)', 'Prazo da sociedade (determinado/indeterminado)', 'Cidade/Estado'],
+  },
+  'carta-demissao': {
+    nome: 'Carta de Demissão',
+    campos: ['Nome do empregado', 'CPF do empregado', 'Cargo/função', 'Nome da empresa', 'CNPJ da empresa', 'Data de admissão', 'Cumprirá aviso prévio? (sim/não)', 'Motivo da demissão (opcional)', 'Cidade/Estado'],
+  },
+  'habeas-corpus': {
+    nome: 'Habeas Corpus',
+    campos: ['Nome do paciente (quem está preso/ameaçado)', 'CPF do paciente', 'Nome do impetrante (quem pede)', 'CPF/OAB do impetrante', 'Autoridade coatora (delegado, juiz, etc)', 'Descrição da coação/ameaça à liberdade', 'Fundamentos jurídicos', 'Pedido (relaxamento, salvo-conduto, etc)', 'Comarca/Tribunal'],
+  },
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { tipo, respostas } = await req.json()
-    const template = TEMPLATES[tipo]
-    if (!template) return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
+    const { tipo, respostas, modelo_id } = await req.json()
     if (!GEMINI_KEY) return NextResponse.json({ error: 'API key não configurada' }, { status: 500 })
 
-    const camposPreenchidos = template.campos.map((campo, i) => `${campo}: ${respostas[i] || 'Não informado'}`).join('\n')
+    let template: { nome: string; campos: string[] } | null = null
+    let promptExtra = ''
 
-    const prompt = `Você é um advogado brasileiro especialista em contratos. Gere um "${template.nome}" completo, profissional e juridicamente válido com base nestas informações:
+    if (modelo_id) {
+      // Modelo personalizado do usuario
+      const payload = getTokenFromHeader(req.headers.get('authorization'))
+      if (!payload?.id) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+      const rows = await query('SELECT nome, campos, prompt_extra FROM contratoai.modelos WHERE id = $1 AND user_id = $2', [modelo_id, payload.id])
+      if (!rows.length) return NextResponse.json({ error: 'Modelo não encontrado' }, { status: 404 })
+      template = { nome: rows[0].nome, campos: rows[0].campos }
+      promptExtra = rows[0].prompt_extra || ''
+    } else {
+      template = TEMPLATES[tipo]
+    }
 
-${camposPreenchidos}
+    if (!template) return NextResponse.json({ error: 'Tipo inválido' }, { status: 400 })
 
-REGRAS:
+    const camposPreenchidos = template.campos.map((campo: string, i: number) => `${campo}: ${respostas[i] || 'Não informado'}`).join('\n')
+
+    // Detectar tipo de documento pra adaptar o prompt
+    const PECAS_JUDICIAIS = ['peticao-inicial', 'contestacao', 'recurso-apelacao', 'habeas-corpus']
+    const DOCS_SIMPLES = ['declaracao', 'carta-demissao', 'recibo', 'procuracao']
+    const isPeca = PECAS_JUDICIAIS.includes(tipo)
+    const isSimples = DOCS_SIMPLES.includes(tipo)
+
+    let regras = ''
+    if (isPeca) {
+      regras = `REGRAS:
+- Use linguagem jurídica formal e técnica
+- Estruture conforme as normas processuais brasileiras (CPC/CPP)
+- Inclua: endereçamento ao juízo, qualificação das partes, dos fatos, do direito, dos pedidos
+- Cite artigos de lei, jurisprudência e doutrina quando aplicável
+- Para petição inicial: inclua valor da causa, provas, pedidos com alíneas, requerimentos finais
+- Para contestação: inclua preliminares (se houver), mérito, pedido de improcedência
+- Para recurso: inclua tempestividade, cabimento, razões do recurso, pedido de reforma
+- Para habeas corpus: inclua descrição da coação, fumus boni iuris, periculum in mora
+- Inclua local, data e espaço para assinatura do advogado (Nome, OAB)
+- NÃO inclua comentários ou explicações, apenas a peça pronta
+- Formate com quebras de linha claras entre seções
+- O documento deve ter entre 1500 e 4000 palavras`
+    } else if (isSimples) {
+      regras = `REGRAS:
+- Use linguagem formal mas objetiva
+- Seja direto e conciso
+- Inclua local e data no final
+- Inclua espaço para assinatura
+- Baseie-se na legislação brasileira vigente
+- NÃO inclua comentários ou explicações, apenas o documento pronto
+- O documento deve ter entre 200 e 800 palavras`
+    } else {
+      regras = `REGRAS:
 - Use linguagem jurídica formal mas compreensível
 - Inclua todas as cláusulas necessárias (objeto, obrigações, prazo, pagamento, rescisão, foro, disposições gerais)
 - Numere as cláusulas (CLÁUSULA PRIMEIRA, CLÁUSULA SEGUNDA, etc.)
@@ -68,6 +151,13 @@ REGRAS:
 - NÃO inclua comentários ou explicações, apenas o contrato pronto
 - Formate com quebras de linha claras entre cláusulas
 - O contrato deve ter entre 800 e 2000 palavras dependendo da complexidade`
+    }
+
+    const prompt = `Você é um advogado brasileiro especialista em direito civil, trabalhista e processual. Gere um "${template.nome}" completo, profissional e juridicamente válido com base nestas informações:
+
+${camposPreenchidos}
+
+${regras}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtra}` : ''}`
 
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
     const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })

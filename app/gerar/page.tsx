@@ -4,24 +4,46 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
-const TIPOS = [
-  { id: 'prestacao-servico', icon: '📋', title: 'Prestação de Serviço' },
-  { id: 'parceria', icon: '🤝', title: 'Acordo de Parceria' },
-  { id: 'confidencialidade', icon: '🔒', title: 'NDA / Confidencialidade' },
-  { id: 'locacao', icon: '🏠', title: 'Contrato de Locação' },
-  { id: 'venda', icon: '🛒', title: 'Compra e Venda' },
-  { id: 'trabalho-freelancer', icon: '💻', title: 'Contrato Freelancer' },
-  { id: 'distrato', icon: '✂️', title: 'Distrato / Rescisão' },
-  { id: 'termos-uso', icon: '📱', title: 'Termos de Uso + Privacidade' },
-  { id: 'recibo', icon: '🧾', title: 'Recibo de Pagamento' },
+const CATEGORIAS = [
+  { label: 'Contratos', tipos: [
+    { id: 'prestacao-servico', icon: '📋', title: 'Prestação de Serviço' },
+    { id: 'parceria', icon: '🤝', title: 'Acordo de Parceria' },
+    { id: 'confidencialidade', icon: '🔒', title: 'NDA / Confidencialidade' },
+    { id: 'locacao', icon: '🏠', title: 'Contrato de Locação' },
+    { id: 'venda', icon: '🛒', title: 'Compra e Venda' },
+    { id: 'trabalho-freelancer', icon: '💻', title: 'Contrato Freelancer' },
+    { id: 'contrato-social', icon: '🏢', title: 'Contrato Social (Empresa)' },
+    { id: 'distrato', icon: '✂️', title: 'Distrato / Rescisão' },
+  ]},
+  { label: 'Pecas Judiciais', tipos: [
+    { id: 'peticao-inicial', icon: '⚖️', title: 'Petição Inicial' },
+    { id: 'contestacao', icon: '🛡️', title: 'Contestação' },
+    { id: 'recurso-apelacao', icon: '📤', title: 'Recurso de Apelação' },
+    { id: 'habeas-corpus', icon: '🔓', title: 'Habeas Corpus' },
+  ]},
+  { label: 'Documentos', tipos: [
+    { id: 'notificacao-extrajudicial', icon: '📨', title: 'Notificação Extrajudicial' },
+    { id: 'procuracao', icon: '📝', title: 'Procuração' },
+    { id: 'declaracao', icon: '📄', title: 'Declaração' },
+    { id: 'termos-uso', icon: '📱', title: 'Termos de Uso + Privacidade' },
+    { id: 'recibo', icon: '🧾', title: 'Recibo de Pagamento' },
+  ]},
+  { label: 'Trabalhista', tipos: [
+    { id: 'acordo-trabalhista', icon: '🤲', title: 'Acordo Trabalhista' },
+    { id: 'carta-demissao', icon: '✉️', title: 'Carta de Demissão' },
+  ]},
 ]
+
+const TIPOS = CATEGORIAS.flatMap(c => c.tipos)
 
 function GerarContent() {
   const searchParams = useSearchParams()
   const initialTipo = searchParams.get('tipo') || ''
+  const initialModelo = searchParams.get('modelo') || ''
 
-  const [step, setStep] = useState<'select' | 'form' | 'loading' | 'result'>(initialTipo ? 'form' : 'select')
+  const [step, setStep] = useState<'select' | 'form' | 'loading' | 'result'>(initialTipo || initialModelo ? 'form' : 'select')
   const [tipo, setTipo] = useState(initialTipo)
+  const [modeloId, setModeloId] = useState<string | null>(initialModelo || null)
   const [campos, setCampos] = useState<string[]>([])
   const [respostas, setRespostas] = useState<string[]>([])
   const [contrato, setContrato] = useState('')
@@ -76,6 +98,23 @@ function GerarContent() {
   }
 
   useEffect(() => {
+    if (modeloId) {
+      // Carregar modelo personalizado
+      const token = typeof window !== 'undefined' ? localStorage.getItem('cai_token') : null
+      if (!token) return
+      fetch(`/api/modelos`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => {
+          const m = d.modelos?.find((m: any) => m.id === modeloId)
+          if (m) {
+            setCampos(m.campos)
+            setRespostas(new Array(m.campos.length).fill(''))
+            setTipoNome(m.nome)
+            setStep('form')
+          }
+        })
+      return
+    }
     if (!tipo) return
     fetch(`/api/gerar?tipo=${tipo}`)
       .then(r => r.json())
@@ -87,10 +126,11 @@ function GerarContent() {
           setStep('form')
         }
       })
-  }, [tipo])
+  }, [tipo, modeloId])
 
   const selectTipo = (id: string) => {
     setTipo(id)
+    setModeloId(null)
     setError('')
   }
 
@@ -112,7 +152,7 @@ function GerarContent() {
       const res = await fetch('/api/gerar', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ tipo, respostas }),
+        body: JSON.stringify({ tipo, respostas, modelo_id: modeloId }),
       })
       const data = await res.json()
       if (data.error) { setError(data.error); setStep('form'); return }
@@ -153,15 +193,20 @@ function GerarContent() {
         {/* Step: Select tipo */}
         {step === 'select' && (
           <div>
-            <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 24 }}>Qual documento você precisa?</p>
-            <div className="tipo-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
-              {TIPOS.map(t => (
-                <button key={t.id} className="tipo-btn" onClick={() => selectTipo(t.id)}>
-                  <span style={{ fontSize: 24 }}>{t.icon}</span>
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{t.title}</span>
-                </button>
-              ))}
-            </div>
+            <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 24 }}>Qual documento voce precisa?</p>
+            {CATEGORIAS.map(cat => (
+              <div key={cat.label} style={{ marginBottom: 24 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>{cat.label}</h3>
+                <div className="tipo-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
+                  {cat.tipos.map(t => (
+                    <button key={t.id} className="tipo-btn" onClick={() => selectTipo(t.id)}>
+                      <span style={{ fontSize: 24 }}>{t.icon}</span>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{t.title}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

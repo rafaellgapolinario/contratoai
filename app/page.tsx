@@ -4,13 +4,23 @@ import { useEffect, useState } from 'react'
 
 const DOCS = [
   { id: 'prestacao-servico', title: 'Prestação de Serviço', desc: 'Freelancers, agências, consultorias. O mais usado.', tag: 'Popular', cls: 'bc-big', icon: 'doc' },
+  { id: 'peticao-inicial', title: 'Petição Inicial', desc: 'Ações judiciais de cobrança, indenização e mais.', tag: 'Novo', cls: 'bc-big', icon: 'doc' },
   { id: 'parceria', title: 'Acordo de Parceria', desc: 'Sociedades informais, collabs, projetos conjuntos.', cls: 'bc-med', icon: 'handshake' },
   { id: 'confidencialidade', title: 'NDA (Confidencialidade)', desc: 'Proteja informações sensíveis do seu negócio.', cls: 'bc-med', icon: 'lock' },
+  { id: 'contestacao', title: 'Contestação', desc: 'Defesa em ações judiciais com fundamentos sólidos.', cls: 'bc-med', icon: 'doc' },
+  { id: 'notificacao-extrajudicial', title: 'Notificação Extrajudicial', desc: 'Notifique formalmente antes de ir à Justiça.', cls: 'bc-med', icon: 'doc' },
   { id: 'locacao', title: 'Contrato de Locação', desc: 'Aluguel de imóvel, sala comercial, equipamento.', cls: 'bc-sm', icon: 'home' },
   { id: 'venda', title: 'Compra e Venda', desc: 'Produtos, veículos, equipamentos.', cls: 'bc-sm', icon: 'cart' },
   { id: 'trabalho-freelancer', title: 'Contrato Freelancer', desc: 'Projetos com escopo, prazo e pagamento definidos.', cls: 'bc-sm', icon: 'code' },
+  { id: 'contrato-social', title: 'Contrato Social', desc: 'Abra sua empresa com contrato societário completo.', cls: 'bc-sm', icon: 'doc' },
+  { id: 'procuracao', title: 'Procuração', desc: 'Delegue poderes com documento válido.', cls: 'bc-sm', icon: 'doc' },
+  { id: 'recurso-apelacao', title: 'Recurso de Apelação', desc: 'Recorra de sentenças desfavoráveis.', cls: 'bc-sm', icon: 'doc' },
+  { id: 'acordo-trabalhista', title: 'Acordo Trabalhista', desc: 'Rescisões e acordos extrajudiciais.', cls: 'bc-sm', icon: 'handshake' },
   { id: 'distrato', title: 'Distrato / Rescisão', desc: 'Encerre contratos de forma legal e documentada.', cls: 'bc-sm', icon: 'scissors' },
   { id: 'termos-uso', title: 'Termos de Uso + Privacidade', desc: 'Pra apps, sites e plataformas digitais.', cls: 'bc-med', icon: 'phone' },
+  { id: 'declaracao', title: 'Declaração', desc: 'Declarações formais para qualquer finalidade.', cls: 'bc-sm', icon: 'doc' },
+  { id: 'carta-demissao', title: 'Carta de Demissão', desc: 'Formalize seu pedido de desligamento.', cls: 'bc-sm', icon: 'doc' },
+  { id: 'habeas-corpus', title: 'Habeas Corpus', desc: 'Proteja a liberdade contra prisão ilegal.', cls: 'bc-sm', icon: 'lock' },
   { id: 'recibo', title: 'Recibo de Pagamento', desc: 'Comprove pagamentos com documento válido.', cls: 'bc-sm', icon: 'receipt' },
 ]
 

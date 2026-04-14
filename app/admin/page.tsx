@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+const MASTER_EMAIL = 'gardaszconsultoria@gmail.com'
+
 interface Doc {
   id: string
   filename: string
@@ -12,8 +14,15 @@ interface Doc {
   criado_em: string
 }
 
+interface ClientUser {
+  id: string; email: string; nome: string; plano: string; plano_expira: string | null
+  criado_em: string; total_docs: string; total_pagamentos: string
+}
+
 export default function AdminPage() {
   const [docs, setDocs] = useState<Doc[]>([])
+  const [clients, setClients] = useState<ClientUser[]>([])
+  const [clientStats, setClientStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
@@ -21,6 +30,8 @@ export default function AdminPage() {
   const [textMode, setTextMode] = useState(false)
   const [textContent, setTextContent] = useState('')
   const [textFilename, setTextFilename] = useState('')
+  const [tab, setTab] = useState<'docs' | 'clients'>('docs')
+  const [isMaster, setIsMaster] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -29,8 +40,25 @@ export default function AdminPage() {
   useEffect(() => {
     const token = getToken()
     if (!token) { router.push('/login'); return }
+    // Check if master
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('cai_user') : null
+    if (userStr) {
+      try { const u = JSON.parse(userStr); setIsMaster(u.email === MASTER_EMAIL) } catch {}
+    }
     fetchDocs()
   }, [router])
+
+  useEffect(() => {
+    if (isMaster && tab === 'clients') fetchClients()
+  }, [isMaster, tab])
+
+  const fetchClients = async () => {
+    try {
+      const res = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${getToken()}` } })
+      const data = await res.json()
+      if (!data.error) { setClients(data.users || []); setClientStats(data.stats) }
+    } catch {}
+  }
 
   const fetchDocs = async () => {
     try {
@@ -116,16 +144,69 @@ export default function AdminPage() {
             <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg,var(--blue),var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff' }}>C</div>
             ContratoAI
           </Link>
-          <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 99, background: 'rgba(239,68,68,0.15)', color: '#f87171' }}>ADMIN</span>
+          <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 99, background: isMaster ? 'rgba(168,85,247,0.15)' : 'rgba(239,68,68,0.15)', color: isMaster ? '#a855f7' : '#f87171' }}>{isMaster ? 'MASTER' : 'ADMIN'}</span>
         </div>
       </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
-        <h1 style={{ fontSize: 24, fontFamily: "'Space Grotesk',sans-serif", marginBottom: 8 }}>Base de Conhecimento</h1>
-        <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 32 }}>
-          Documentos aqui alimentam o chat juridico dos clientes. A IA responde apenas com base nestes documentos.
+        <h1 style={{ fontSize: 24, fontFamily: "'Space Grotesk',sans-serif", marginBottom: 8 }}>Painel Admin</h1>
+        <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 20 }}>
+          Gerencie documentos da base de conhecimento{isMaster ? ' e veja os clientes cadastrados' : ''}.
         </p>
 
+        {/* Tabs */}
+        {isMaster && (
+          <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', width: 'fit-content' }}>
+            <button onClick={() => setTab('docs')} style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, background: tab === 'docs' ? 'var(--blue)' : 'transparent', color: tab === 'docs' ? '#fff' : 'var(--text2)' }}>Documentos</button>
+            <button onClick={() => setTab('clients')} style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, background: tab === 'clients' ? 'var(--blue)' : 'transparent', color: tab === 'clients' ? '#fff' : 'var(--text2)' }}>Clientes</button>
+          </div>
+        )}
+
+        {/* Clients tab (master only) */}
+        {isMaster && tab === 'clients' && (
+          <div>
+            {clientStats && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 4 }}>Total clientes</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 700 }}>{clientStats.total_users}</div>
+                </div>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 4 }}>Plano Mensal</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 700, color: 'var(--blue-light)' }}>{clientStats.ativos_mensal}</div>
+                </div>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 4 }}>Free</div>
+                  <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 32, fontWeight: 700 }}>{clientStats.free}</div>
+                </div>
+              </div>
+            )}
+            <h2 style={{ fontSize: 18, marginBottom: 16 }}>Clientes cadastrados</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {clients.map(c => (
+                <div key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{c.nome || c.email}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+                      {c.email} &middot; Desde {new Date(c.criado_em).toLocaleDateString('pt-BR')}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text3)' }}>{c.total_docs} docs</span>
+                    <span style={{ fontSize: 12, color: 'var(--text3)' }}>{c.total_pagamentos} pgtos</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: c.plano === 'mensal' && c.plano_expira && new Date(c.plano_expira) > new Date() ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.06)', color: c.plano === 'mensal' && c.plano_expira && new Date(c.plano_expira) > new Date() ? 'var(--blue-light)' : 'var(--text3)' }}>
+                      {c.plano === 'mensal' && c.plano_expira && new Date(c.plano_expira) > new Date() ? 'Mensal' : 'Free'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {clients.length === 0 && <p style={{ color: 'var(--text3)', fontSize: 14 }}>Nenhum cliente cadastrado ainda</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Docs tab */}
+        {tab === 'docs' && <>
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 32 }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
@@ -227,6 +308,7 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+        </>}
       </div>
     </div>
   )
