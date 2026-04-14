@@ -8,12 +8,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nome, setNome] = useState('')
+  const [aceitaTermos, setAceitaTermos] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (mode === 'signup' && !aceitaTermos) {
+      setError('Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para criar sua conta.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
@@ -73,9 +78,29 @@ export default function LoginPage() {
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" style={{ width: '100%', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', fontSize: 14 }} />
             </div>
 
+            {mode === 'signup' && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 4 }}>
+                <input
+                  type="checkbox"
+                  checked={aceitaTermos}
+                  onChange={e => setAceitaTermos(e.target.checked)}
+                  style={{ marginTop: 3, accentColor: 'var(--blue)', width: 16, height: 16, flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>
+                  Li e aceito os{' '}
+                  <a href="/termos" target="_blank" style={{ color: 'var(--blue-light)', textDecoration: 'underline' }}>Termos de Uso</a>
+                  {' '}e a{' '}
+                  <a href="/privacidade" target="_blank" style={{ color: 'var(--blue-light)', textDecoration: 'underline' }}>Politica de Privacidade</a>.
+                  <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: 'var(--text3)' }}>
+                    Documentos gerados por IA podem conter erros e devem ser revisados antes do uso.
+                  </span>
+                </span>
+              </label>
+            )}
+
             {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#f87171', fontSize: 13 }}>{error}</div>}
 
-            <button type="submit" disabled={loading} style={{
+            <button type="submit" disabled={loading || (mode === 'signup' && !aceitaTermos)} style={{
               padding: '14px', borderRadius: 10, background: 'var(--blue)', color: '#fff',
               fontSize: 15, fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif",
               boxShadow: '0 0 24px var(--glow)', opacity: loading ? 0.6 : 1, marginTop: 4,

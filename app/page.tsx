@@ -461,8 +461,12 @@ export default function Home() {
             <div style={{ width: 24, height: 24, borderRadius: 6, background: 'linear-gradient(135deg,var(--blue),var(--blue-l))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>C</div>
             ContratoAI
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-            &copy; 2026 ContratoAI by <a href="https://rga-technologies.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--blue-l)' }}>RGA Technologies</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Link href="/termos" style={{ fontSize: 12, color: 'var(--text3)' }}>Termos de Uso</Link>
+            <Link href="/privacidade" style={{ fontSize: 12, color: 'var(--text3)' }}>Privacidade</Link>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+              &copy; 2026 ContratoAI by <a href="https://rga-technologies.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--blue-l)' }}>RGA Technologies</a>
+            </span>
           </div>
         </div>
       </footer>

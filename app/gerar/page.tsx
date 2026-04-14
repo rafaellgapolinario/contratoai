@@ -326,6 +326,14 @@ ${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
 
   return (
     <div>
+      {/* Disclaimer IA */}
+      <div style={{ padding: '12px 16px', marginBottom: 16, borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6, margin: 0 }}>
+          <strong style={{ color: '#f59e0b' }}>Aviso:</strong> Este documento foi gerado por inteligencia artificial e pode conter imprecisoes. <strong>Revise todas as clausulas antes de assinar.</strong> Para situacoes de alta complexidade, consulte um advogado. Ao utilizar este documento, voce concorda com os <a href="/termos" target="_blank" style={{ color: 'var(--blue-light)', textDecoration: 'underline' }}>Termos de Uso</a>.
+        </p>
+      </div>
+
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         <button onClick={downloadPdf} disabled={!canDownload} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: canDownload ? '#ef4444' : 'rgba(239,68,68,0.3)', color: '#fff', fontSize: 14, fontWeight: 600, opacity: canDownload ? 1 : 0.6, cursor: canDownload ? 'pointer' : 'not-allowed' }}>
