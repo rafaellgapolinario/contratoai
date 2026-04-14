@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { query } from '@/lib/db'
+import { getTokenFromHeader } from '@/lib/jwt'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -68,11 +70,22 @@ REGRAS:
 - O contrato deve ter entre 800 e 2000 palavras dependendo da complexidade`
 
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
-    return NextResponse.json({ contrato: text, tipo: template.nome })
+    // Salvar no banco se usuario logado
+    let docId = null
+    const payload = getTokenFromHeader(req.headers.get('authorization'))
+    if (payload?.id) {
+      const rows = await query(
+        'INSERT INTO contratoai.documents (user_id, tipo, tipo_nome, respostas, conteudo) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [payload.id, tipo, template.nome, JSON.stringify(respostas), text]
+      )
+      docId = rows[0]?.id
+    }
+
+    return NextResponse.json({ contrato: text, tipo: template.nome, docId })
   } catch (e: any) {
     console.error('Erro ao gerar contrato:', e)
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })

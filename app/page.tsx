@@ -48,6 +48,7 @@ export default function Home() {
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
             <a href="#documentos" style={{ fontSize:14, color:'var(--text2)' }}>Documentos</a>
             <a href="#como-funciona" style={{ fontSize:14, color:'var(--text2)' }}>Como funciona</a>
+            <Link href="/login" style={{ fontSize:14, color:'var(--text2)' }}>Entrar</Link>
             <Link href="/gerar" style={{ fontSize:13, fontWeight:600, background:'var(--blue)', color:'#fff', padding:'9px 18px', borderRadius:8, boxShadow:'0 0 20px var(--glow)' }}>Gerar contrato</Link>
           </div>
         </div>

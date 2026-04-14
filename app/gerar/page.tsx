@@ -60,9 +60,12 @@ function GerarContent() {
     setStep('loading')
     setError('')
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('cai_token') : null
+      if (token) headers['Authorization'] = `Bearer ${token}`
       const res = await fetch('/api/gerar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ tipo, respostas }),
       })
       const data = await res.json()
