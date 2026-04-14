@@ -79,18 +79,51 @@ function GerarContent() {
     }
   }
 
-  const downloadTxt = () => {
-    const blob = new Blob([contrato], { type: 'text/plain;charset=utf-8' })
+  const fileName = tipoNome.replace(/[^a-zA-Z0-9 ]/g, '').trim()
+
+  const downloadPdf = async () => {
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const margin = 20
+    const maxW = pageW - margin * 2
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.text(tipoNome.toUpperCase(), pageW / 2, 25, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(120)
+    doc.text(`Gerado por ContratoAI em ${new Date().toLocaleDateString('pt-BR')}`, pageW / 2, 32, { align: 'center' })
+    doc.setTextColor(30)
+    doc.setFontSize(11)
+    const lines = doc.splitTextToSize(contrato, maxW)
+    let y = 42
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20 }
+      doc.text(line, margin, y)
+      y += 5.5
+    }
+    doc.save(`${fileName}.pdf`)
+  }
+
+  const downloadWord = () => {
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${tipoNome}</title>
+<style>body{font-family:Calibri,sans-serif;font-size:12pt;line-height:1.8;margin:2cm}h1{font-size:16pt;text-align:center;margin-bottom:8pt}p.sub{font-size:9pt;color:#888;text-align:center;margin-bottom:24pt}</style></head>
+<body><h1>${tipoNome.toUpperCase()}</h1><p class="sub">Gerado por ContratoAI em ${new Date().toLocaleDateString('pt-BR')}</p>
+${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
+</body></html>`
+    const blob = new Blob([html], { type: 'application/msword;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${tipoNome.replace(/[^a-zA-Z0-9 ]/g, '')}.txt`
+    a.download = `${fileName}.doc`
     a.click()
     URL.revokeObjectURL(url)
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(contrato).catch(() => {})
+    navigator.clipboard.writeText(contrato).then(() => {}).catch(() => {})
   }
 
   return (
@@ -107,7 +140,7 @@ function GerarContent() {
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-          <Link href="/" style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)' }}>
+          <Link href={typeof window !== 'undefined' && localStorage.getItem('cai_token') ? '/painel' : '/'} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           </Link>
           <div>
@@ -185,9 +218,13 @@ function GerarContent() {
         {step === 'result' && (
           <div ref={resultRef}>
             <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-              <button onClick={downloadTxt} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--blue)', color: '#fff', fontSize: 14, fontWeight: 600, boxShadow: '0 0 20px var(--glow)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Baixar TXT
+              <button onClick={downloadPdf} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: '#ef4444', color: '#fff', fontSize: 14, fontWeight: 600 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                Baixar PDF
+              </button>
+              <button onClick={downloadWord} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                Baixar Word
               </button>
               <button onClick={copyToClipboard} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>

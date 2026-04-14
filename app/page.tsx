@@ -215,7 +215,7 @@ export default function Home() {
             <a href="#documentos">Documentos</a>
             <a href="#como-funciona">Como funciona</a>
             <a href="#preco">Preço</a>
-            <Link href="/login" style={{ fontSize: 14, color: 'var(--text2)' }}>Entrar</Link>
+            <Link href="/login" style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>Entrar</Link>
             <Link href="/gerar" className="cta-green">Gerar contrato</Link>
           </div>
           <Link href="/gerar" className="nav-mob">Gerar contrato</Link>
