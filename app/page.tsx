@@ -27,10 +27,10 @@ const DOCS = [
 const FAQS = [
   { q: 'O contrato gerado tem validade jurídica?', a: 'Sim, contratos particulares têm validade entre as partes conforme o Código Civil brasileiro.' },
   { q: 'Preciso de advogado?', a: 'Para a maioria dos casos do dia a dia, não. Para situações complexas, recomendamos consultar um profissional.' },
-  { q: 'Como funciona o pagamento?', a: 'Plano unico de R$59,90/mes com tudo ilimitado: documentos, consulta juridica, analise de risco, assinatura digital, jurisprudencia e teses. Sem fidelidade.' },
+  { q: 'Como funciona o pagamento?', a: 'Voce pode comprar documentos avulsos por R$11,90 cada ou assinar o plano Profissional por R$59,90/mes com tudo ilimitado: documentos, consulta juridica IA, analise de risco, assinatura digital, jurisprudencia e base de teses. Sem fidelidade, cancele quando quiser.' },
   { q: 'Posso editar o contrato depois?', a: 'Sim, o documento é seu. Pode editar, imprimir e usar como quiser.' },
-  { q: 'Quais tipos de contrato vocês geram?', a: 'Prestação de serviço, parceria, NDA, locação, compra e venda, freelancer, distrato, termos de uso e recibo.' },
-  { q: 'A IA erra?', a: 'A IA gera com base nas suas respostas. Sempre revise o documento antes de assinar.' },
+  { q: 'Quais tipos de documento vocês geram?', a: '19 tipos: contratos (prestação de serviço, parceria, NDA, locação, compra e venda, freelancer, social, distrato), peças judiciais (petição inicial, contestação, recurso de apelação, habeas corpus), documentos (notificação extrajudicial, procuração, declaração, termos de uso, recibo) e trabalhista (acordo extrajudicial, carta de demissão).' },
+  { q: 'A IA erra?', a: 'A IA gera com base nas suas respostas e legislação brasileira vigente. Sempre revise o documento antes de assinar. Para casos complexos, consulte um advogado.' },
 ]
 
 function DocIcon({ type }: { type: string }) {
@@ -225,6 +225,7 @@ export default function Home() {
             <a href="#documentos">Documentos</a>
             <a href="#como-funciona">Como funciona</a>
             <a href="#preco">Preço</a>
+            <Link href="/blog" style={{ fontSize: 14, color: 'var(--text2)', transition: 'color 0.2s' }}>Blog</Link>
             <Link href="/login" style={{ fontSize: 14, color: '#fff', fontWeight: 500 }}>Entrar</Link>
             <Link href="/gerar" className="cta-green">Gerar contrato</Link>
           </div>
@@ -323,7 +324,7 @@ export default function Home() {
           <div className="tl-row">
             <div className="tl-line"><div className="tl-line-fill rv" /></div>
             {[
-              { n: '1', t: 'Escolha o tipo de documento', d: 'Prestação de serviço, NDA, parceria, locação... Temos 9 tipos.' },
+              { n: '1', t: 'Escolha o tipo de documento', d: 'Contratos, peças judiciais, notificações, procurações... São 19 tipos disponíveis.' },
               { n: '2', t: 'Responda perguntas simples', d: 'Linguagem humana, não juridiquês. Nome, valor, prazo, o que vai fazer.' },
               { n: '3', t: 'Baixe seu documento', d: 'A IA gera o contrato completo, personalizado, pronto pra assinar.' },
             ].map(({ n, t, d }, i) => (
@@ -414,21 +415,42 @@ export default function Home() {
           <h2 className="sec-title rv d1">Simples e transparente</h2>
         </div>
         <div className="sec-in">
-          <div className="glass price-card rv d2" style={{ borderRadius: 16 }}>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'var(--blue-l)', marginBottom: 4 }}>AVULSO</div>
-            <div className="price-val">R$11,90 <span>/documento</span></div>
-            <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 8 }}>ou <strong style={{ color: 'var(--blue-l)' }}>R$59,90/mes</strong> tudo ilimitado</p>
-            <ul className="price-list">
-              <li>Contrato personalizado com IA</li>
-              <li>Cláusulas específicas do seu caso</li>
-              <li>Linguagem jurídica formal</li>
-              <li>Pronto pra assinar</li>
-              <li>Download imediato</li>
-            </ul>
-            <Link href="/gerar" className="cta-green" style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 16, fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, borderRadius: 10, animation: 'glow-pulse 3s ease-in-out infinite' }}>
-              Gerar meu contrato agora
-            </Link>
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 16 }}>Sem assinatura obrigatória. Pague só quando precisar.</p>
+          <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', maxWidth: 880, margin: '48px auto 0' }}>
+            {/* Avulso */}
+            <div className="glass rv d1" style={{ borderRadius: 16, padding: '32px', flex: '1 1 320px', maxWidth: 400, textAlign: 'center' }}>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>AVULSO</div>
+              <div className="price-val" style={{ fontSize: 40 }}>R$11,90 <span>/doc</span></div>
+              <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 16 }}>Pague so quando precisar</p>
+              <ul className="price-list">
+                <li>1 documento personalizado com IA</li>
+                <li>19 tipos disponíveis</li>
+                <li>Download PDF e Word</li>
+                <li>Linguagem jurídica formal</li>
+              </ul>
+              <Link href="/gerar" style={{ display: 'block', padding: '14px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif", textAlign: 'center', transition: 'all 0.3s' }}>
+                Gerar documento
+              </Link>
+            </div>
+            {/* Profissional */}
+            <div className="glass rv d2" style={{ borderRadius: 16, padding: '32px', flex: '1 1 320px', maxWidth: 400, textAlign: 'center', border: '1px solid rgba(59,130,246,0.4)', boxShadow: '0 0 48px rgba(30,58,138,0.2)', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', padding: '4px 16px', borderRadius: 99, background: 'var(--blue-l)', fontSize: 11, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace", color: '#fff', letterSpacing: 1 }}>MAIS POPULAR</div>
+              <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'var(--blue-l)', marginBottom: 4 }}>PROFISSIONAL</div>
+              <div className="price-val">R$59,90 <span>/mes</span></div>
+              <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 16 }}>Tudo ilimitado. Sem fidelidade.</p>
+              <ul className="price-list">
+                <li>Documentos ilimitados</li>
+                <li>Consulta jurídica IA (RAG)</li>
+                <li>Análise de risco de contratos</li>
+                <li>Assinatura digital integrada</li>
+                <li>Pesquisa de jurisprudência</li>
+                <li>Base de teses jurídicas</li>
+                <li>Modelos personalizados</li>
+                <li>Suporte prioritário</li>
+              </ul>
+              <Link href="/gerar" className="cta-green" style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: 16, fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, borderRadius: 10, animation: 'glow-pulse 3s ease-in-out infinite' }}>
+                Começar agora
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -472,6 +494,7 @@ export default function Home() {
             ContratoAI
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Link href="/blog" style={{ fontSize: 12, color: 'var(--text3)' }}>Blog</Link>
             <Link href="/termos" style={{ fontSize: 12, color: 'var(--text3)' }}>Termos de Uso</Link>
             <Link href="/privacidade" style={{ fontSize: 12, color: 'var(--text3)' }}>Privacidade</Link>
             <span style={{ fontSize: 12, color: 'var(--text3)' }}>
