@@ -11,7 +11,7 @@ const mpPreference = mpClient ? new Preference(mpClient) : null
 
 const PLANS: Record<string, { title: string; price: number; tipo: 'avulso' | 'mensal' }> = {
   avulso: { title: 'Documento Avulso — ContratoAI', price: 11.90, tipo: 'avulso' },
-  mensal: { title: 'Plano Mensal Ilimitado — ContratoAI', price: 34.90, tipo: 'mensal' },
+  mensal: { title: 'Plano Profissional — ContratoAI', price: 59.90, tipo: 'mensal' },
 }
 
 export async function POST(req: NextRequest) {

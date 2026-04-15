@@ -27,7 +27,7 @@ const DOCS = [
 const FAQS = [
   { q: 'O contrato gerado tem validade jurídica?', a: 'Sim, contratos particulares têm validade entre as partes conforme o Código Civil brasileiro.' },
   { q: 'Preciso de advogado?', a: 'Para a maioria dos casos do dia a dia, não. Para situações complexas, recomendamos consultar um profissional.' },
-  { q: 'Como funciona o pagamento?', a: 'Você paga R$11,90 por documento avulso ou R$34,90/mês para gerar ilimitado. Sem fidelidade.' },
+  { q: 'Como funciona o pagamento?', a: 'Plano unico de R$59,90/mes com tudo ilimitado: documentos, consulta juridica, analise de risco, assinatura digital, jurisprudencia e teses. Sem fidelidade.' },
   { q: 'Posso editar o contrato depois?', a: 'Sim, o documento é seu. Pode editar, imprimir e usar como quiser.' },
   { q: 'Quais tipos de contrato vocês geram?', a: 'Prestação de serviço, parceria, NDA, locação, compra e venda, freelancer, distrato, termos de uso e recibo.' },
   { q: 'A IA erra?', a: 'A IA gera com base nas suas respostas. Sempre revise o documento antes de assinar.' },
@@ -244,10 +244,10 @@ export default function Home() {
                 Contratos profissionais<br />
                 <span style={{ color: 'var(--blue-l)' }}>em minutos.</span>
               </h1>
-              <p className="rv d2 sec-sub">Responda perguntas simples. A IA gera seu contrato personalizado, com cláusulas específicas do seu caso, pronto pra assinar e usar.</p>
+              <p className="rv d2 sec-sub">Para empreendedores, advogados, PMEs e qualquer pessoa que precisa de documentos juridicos profissionais. A IA gera contratos, pecas judiciais e mais — com clausulas especificas do seu caso, pronto pra assinar.</p>
               <div className="rv d2 sec-line" />
               <div className="rv d3 hero-badges" style={{ display: 'flex', gap: 16, marginTop: 28, flexWrap: 'wrap' }}>
-                {[['9+', 'Tipos de documento'], ['< 3min', 'Pra gerar'], ['R$11,90', 'Por documento']].map(([n, l]) => (
+                {[['19', 'Tipos de documento'], ['< 3min', 'Pra gerar'], ['R$11,90', 'Por documento']].map(([n, l]) => (
                   <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 14, fontWeight: 500, color: 'var(--blue-l)' }}>{n}</span>
                     <span style={{ fontSize: 13, color: 'var(--text3)' }}>{l}</span>
@@ -417,7 +417,7 @@ export default function Home() {
           <div className="glass price-card rv d2" style={{ borderRadius: 16 }}>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, color: 'var(--blue-l)', marginBottom: 4 }}>AVULSO</div>
             <div className="price-val">R$11,90 <span>/documento</span></div>
-            <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 8 }}>ou <strong style={{ color: 'var(--blue-l)' }}>R$34,90/mês</strong> ilimitado</p>
+            <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 8 }}>ou <strong style={{ color: 'var(--blue-l)' }}>R$59,90/mes</strong> tudo ilimitado</p>
             <ul className="price-list">
               <li>Contrato personalizado com IA</li>
               <li>Cláusulas específicas do seu caso</li>
@@ -458,7 +458,7 @@ export default function Home() {
       <section className="cta-final">
         <h2 className="rv">Pare de trabalhar sem contrato.</h2>
         <h2 className="rv d1 big">Proteja seu trabalho com IA.</h2>
-        <p className="rv d2 sub">A partir de R$11,90. Pronto em minutos.</p>
+        <p className="rv d2 sub">A partir de R$11,90. Ou R$59,90/mes ilimitado. Pronto em minutos.</p>
         <Link href="/gerar" className="cta-green rv d3" style={{ padding: '18px 44px', fontSize: 18, fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, borderRadius: 12, animation: 'glow-pulse 3s ease-in-out infinite' }}>
           Gerar meu contrato agora
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

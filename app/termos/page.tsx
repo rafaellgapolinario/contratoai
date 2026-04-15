@@ -55,7 +55,7 @@ export default function TermosPage() {
 <h2>6. Pagamentos e Reembolso</h2>
 <ul>
 <li><strong>Documento avulso (R$11,90):</strong> pagamento unico por documento. Nao reembolsavel apos a geracao do documento.</li>
-<li><strong>Plano mensal (R$34,90/mes):</strong> acesso ilimitado por 30 dias. Nao renovado automaticamente. Nao reembolsavel apos ativacao.</li>
+<li><strong>Plano profissional (R$59,90/mes):</strong> acesso ilimitado por 30 dias a todos os recursos. Nao renovado automaticamente. Nao reembolsavel apos ativacao.</li>
 <li>Pagamentos sao processados pelo <strong>Mercado Pago</strong>. O ContratoAI nao armazena dados de cartao de credito.</li>
 </ul>
 

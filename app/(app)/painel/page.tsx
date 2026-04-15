@@ -104,7 +104,7 @@ function PainelContent() {
               <div style={{ marginTop: 8 }}>
                 <span style={{ fontSize: 12, color: 'var(--text3)' }}>R$11,90/doc avulso</span>
                 <span style={{ fontSize: 12, color: 'var(--text3)', margin: '0 6px' }}>ou</span>
-                <span style={{ fontSize: 12, color: 'var(--blue-light)', fontWeight: 600 }}>R$34,90/mês ilimitado</span>
+                <span style={{ fontSize: 12, color: 'var(--blue-light)', fontWeight: 600 }}>R$59,90/mes ilimitado</span>
               </div>
             )}
           </div>
@@ -118,7 +118,7 @@ function PainelContent() {
           </Link>
           {!isMensal && (
             <button onClick={assinarMensal} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid var(--border-strong)', color: 'var(--blue-light)', fontSize: 14, fontWeight: 600 }}>
-              Assinar Mensal — R$34,90/mes
+              Plano Profissional — R$59,90/mes
             </button>
           )}
         </div>

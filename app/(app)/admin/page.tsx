@@ -234,14 +234,16 @@ export default function AdminPage() {
                 style={{ display: 'none' }}
                 onChange={e => { if (e.target.files?.[0]) uploadFile(e.target.files[0]) }}
               />
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                style={{ width: '100%', padding: '40px 20px', borderRadius: 12, border: '2px dashed var(--border)', background: 'transparent', color: 'var(--text2)', fontSize: 14, cursor: uploading ? 'not-allowed' : 'pointer' }}
+              <div
+                onClick={() => !uploading && fileRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--blue)'; e.currentTarget.style.background = 'rgba(59,130,246,0.05)' }}
+                onDragLeave={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.background = '' }}
+                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = ''; e.currentTarget.style.background = ''; const f = e.dataTransfer.files[0]; if (f) uploadFile(f) }}
+                style={{ width: '100%', padding: '40px 20px', borderRadius: 12, border: '2px dashed var(--border)', background: 'transparent', color: 'var(--text2)', fontSize: 14, cursor: uploading ? 'not-allowed' : 'pointer', textAlign: 'center', transition: 'all 0.2s' }}
               >
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 12px', display: 'block', opacity: 0.5 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                {uploading ? 'Processando...' : 'Clique para enviar PDF, TXT ou MD'}
-              </button>
+                {uploading ? 'Processando...' : 'Arraste um arquivo aqui ou clique para enviar (PDF, TXT, MD)'}
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         } catch {
           // Fallback Gemini
           const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview' })
+          const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
           const base64 = buffer.toString('base64')
           const result = await model.generateContent([
             { inlineData: { mimeType: 'application/pdf', data: base64 } },

@@ -625,9 +625,9 @@ ${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
             </button>
             <button onClick={() => handleCheckout('mensal')} disabled={checkingOut} style={{ flex: 1, minWidth: 200, padding: '14px 20px', borderRadius: 12, background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.12))', border: '1px solid var(--blue)', color: 'var(--text)', fontSize: 14, fontWeight: 600, textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, fontWeight: 700, background: 'var(--blue)', color: '#fff', padding: '2px 8px', borderRadius: 99 }}>MELHOR</div>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>Plano Mensal</div>
-              <div style={{ fontSize: 24, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>R$34,90<span style={{ fontSize: 13, fontWeight: 400 }}>/mes</span></div>
-              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Documentos ilimitados por 30 dias</div>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>Plano Profissional</div>
+              <div style={{ fontSize: 24, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>R$59,90<span style={{ fontSize: 13, fontWeight: 400 }}>/mes</span></div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>Tudo ilimitado: docs, consultas, analises, assinaturas</div>
             </button>
           </div>
           {checkingOut && <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 12, textAlign: 'center' }}>Redirecionando para o pagamento...</p>}

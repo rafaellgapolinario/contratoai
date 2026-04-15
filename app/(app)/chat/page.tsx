@@ -179,7 +179,7 @@ export default function ChatPage() {
             {error}
             {error.includes('plano mensal') && (
               <Link href="/painel" style={{ display: 'block', marginTop: 6, color: 'var(--blue-light)', fontWeight: 600, fontSize: 13 }}>
-                Assinar plano mensal — R$34,90/mes
+                Assinar plano profissional — R$59,90/mes
               </Link>
             )}
           </div>
