@@ -31,7 +31,14 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const textContent = formData.get('text') as string | null
-    const filename = formData.get('filename') as string || file?.name || 'documento.txt'
+    const rawName = formData.get('filename') as string || file?.name || 'documento.txt'
+    // Limpar nome: remover extensao, " - Copia", hifens por espacos
+    const filename = rawName
+      .replace(/\.(pdf|txt|md|doc|docx)$/i, '')
+      .replace(/\s*-\s*[Cc]opia\s*$/i, '')
+      .replace(/\s*\(\d+\)\s*$/i, '')
+      .replace(/-/g, ' ')
+      .trim()
 
     let content = ''
 
