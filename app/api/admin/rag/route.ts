@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
 
     if (file) {
       console.log(`[rag] arquivo recebido: ${filename} (${file.size} bytes, ${file.type})`)
-      // Limite 20MB
-      if (file.size > 20 * 1024 * 1024) {
-        return NextResponse.json({ error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximo 20MB.` }, { status: 400 })
+      // Limite 50MB
+      if (file.size > 50 * 1024 * 1024) {
+        return NextResponse.json({ error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximo 50MB.` }, { status: 400 })
       }
       const buffer = Buffer.from(await file.arrayBuffer())
 
