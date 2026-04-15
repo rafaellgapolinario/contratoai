@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
 
   try {
+    const uploadStart = Date.now()
     console.log('[rag] iniciando upload...')
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (content.length > 500000) content = content.slice(0, 500000)
 
     // Chunkar o texto
-    const chunks = splitIntoChunks(content, 1500)
+    const chunks = splitIntoChunks(content, 3000)
     if (chunks.length === 0) {
       return NextResponse.json({ error: 'Nao foi possivel extrair texto do documento' }, { status: 400 })
     }
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[rag] doc ${filename} processado: ${limitedChunks.length} chunks`)
+    console.log(`[rag] doc ${filename} processado: ${limitedChunks.length} chunks em ${((Date.now() - uploadStart) / 1000).toFixed(1)}s`)
 
     return NextResponse.json({
       ok: true,
@@ -182,24 +183,35 @@ function splitIntoChunks(text: string, maxLen: number): string[] {
 async function generateEmbeddings(chunks: string[]): Promise<number[][]> {
   const genAI = new GoogleGenerativeAI(GEMINI_KEY)
   const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' })
-  const embeddings: number[][] = []
+  const embeddings: number[][] = new Array(chunks.length)
+  const BATCH = 5 // 5 em paralelo
+  const start = Date.now()
 
-  for (const chunk of chunks) {
-    try {
-      const result = await model.embedContent({
-        content: { parts: [{ text: chunk }], role: 'user' },
-        taskType: 'RETRIEVAL_DOCUMENT' as any,
-      })
-      embeddings.push(result.embedding.values)
-    } catch (e: any) {
-      console.error('[rag] embedding error:', e.message)
-      // Fallback: vetor zero
-      embeddings.push(new Array(768).fill(0))
+  for (let i = 0; i < chunks.length; i += BATCH) {
+    const batch = chunks.slice(i, i + BATCH)
+    const results = await Promise.allSettled(
+      batch.map(chunk =>
+        model.embedContent({
+          content: { parts: [{ text: chunk }], role: 'user' },
+          taskType: 'RETRIEVAL_DOCUMENT' as any,
+        })
+      )
+    )
+    results.forEach((r, j) => {
+      if (r.status === 'fulfilled') {
+        embeddings[i + j] = r.value.embedding.values
+      } else {
+        console.error(`[rag] embedding ${i + j} error:`, (r as any).reason?.message?.slice(0, 80))
+        embeddings[i + j] = new Array(3072).fill(0)
+      }
+    })
+    if (i + BATCH < chunks.length) await new Promise(r => setTimeout(r, 50))
+    if ((i + BATCH) % 25 === 0 || i + BATCH >= chunks.length) {
+      console.log(`[rag] embeddings: ${Math.min(i + BATCH, chunks.length)}/${chunks.length} (${((Date.now() - start) / 1000).toFixed(1)}s)`)
     }
-    // Rate limit
-    await new Promise(r => setTimeout(r, 100))
   }
 
+  console.log(`[rag] embeddings concluidos: ${chunks.length} chunks em ${((Date.now() - start) / 1000).toFixed(1)}s`)
   return embeddings
 }
 
