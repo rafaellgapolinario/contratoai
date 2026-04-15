@@ -276,6 +276,210 @@ function GerarContent() {
   )
 }
 
+function SignatureSection({ docId }: { docId: string }) {
+  const [open, setOpen] = useState(false)
+  const [nome, setNome] = useState('')
+  const [cpf, setCpf] = useState('')
+  const [signing, setSigning] = useState(false)
+  const [signed, setSigned] = useState<any>(null)
+  const [sigError, setSigError] = useState('')
+  const [assinaturas, setAssinaturas] = useState<any[]>([])
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drawingRef = useRef(false)
+
+  useEffect(() => {
+    // Carregar assinaturas existentes
+    fetch(`/api/assinar?document_id=${docId}`).then(r => r.json()).then(d => {
+      if (d.assinaturas) setAssinaturas(d.assinaturas)
+    }).catch(() => {})
+  }, [docId, signed])
+
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    drawingRef.current = true
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    const rect = canvas.getBoundingClientRect()
+    const x = ('touches' in e ? e.touches[0].clientX : e.clientX) - rect.left
+    const y = ('touches' in e ? e.touches[0].clientY : e.clientY) - rect.top
+    ctx.beginPath(); ctx.moveTo(x, y)
+  }
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!drawingRef.current) return
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    const rect = canvas.getBoundingClientRect()
+    const x = ('touches' in e ? e.touches[0].clientX : e.clientX) - rect.left
+    const y = ('touches' in e ? e.touches[0].clientY : e.clientY) - rect.top
+    ctx.strokeStyle = '#60A5FA'; ctx.lineWidth = 2; ctx.lineCap = 'round'
+    ctx.lineTo(x, y); ctx.stroke()
+  }
+  const stopDraw = () => { drawingRef.current = false }
+  const clearCanvas = () => {
+    const canvas = canvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+
+  const assinar = async () => {
+    if (!nome.trim()) { setSigError('Nome obrigatorio'); return }
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const img = canvas.toDataURL('image/png')
+    // Verificar se canvas esta vazio
+    const ctx = canvas.getContext('2d')
+    const pixels = ctx?.getImageData(0, 0, canvas.width, canvas.height).data
+    const hasDrawing = pixels ? Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0) : false
+    if (!hasDrawing) { setSigError('Desenhe sua assinatura no campo acima'); return }
+
+    setSigning(true); setSigError('')
+    const token = localStorage.getItem('cai_token')
+    try {
+      const res = await fetch('/api/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ document_id: docId, nome_signatario: nome, cpf_signatario: cpf, assinatura_img: img }),
+      })
+      const data = await res.json()
+      if (data.ok) { setSigned(data.assinatura); setOpen(false) }
+      else setSigError(data.error || 'Erro ao assinar')
+    } catch { setSigError('Erro de conexao') }
+    setSigning(false)
+  }
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      {/* Assinaturas existentes */}
+      {assinaturas.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          {assinaturas.map((a, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8, marginBottom: 6, fontSize: 12 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span style={{ color: '#22c55e', fontWeight: 600 }}>Assinado por {a.nome_signatario}</span>
+              <span style={{ color: 'var(--text3)' }}>{new Date(a.criado_em).toLocaleString('pt-BR')}</span>
+              {a.integro ? (
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>Integro</span>
+              ) : (
+                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'rgba(239,68,68,0.12)', color: '#f87171' }}>Modificado</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!open && !signed && (
+        <button onClick={() => setOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e', fontSize: 13, fontWeight: 600 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Assinar digitalmente
+        </button>
+      )}
+
+      {signed && (
+        <div style={{ padding: '10px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, fontSize: 12 }}>
+          <span style={{ color: '#22c55e', fontWeight: 600 }}>Documento assinado!</span>
+          <span style={{ color: 'var(--text3)', marginLeft: 8 }}>Hash: {signed.hash?.slice(0, 16)}...</span>
+        </div>
+      )}
+
+      {open && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20 }}>
+          <h3 style={{ fontSize: 15, marginBottom: 12 }}>Assinatura Digital</h3>
+          {sigError && <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12, marginBottom: 12 }}>{sigError}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4, display: 'block' }}>Nome completo *</label>
+              <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Seu nome" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4, display: 'block' }}>CPF (opcional)</label>
+              <input value={cpf} onChange={e => setCpf(e.target.value)} placeholder="000.000.000-00" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13 }} />
+            </div>
+          </div>
+
+          <label style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, display: 'block' }}>Desenhe sua assinatura</label>
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <canvas
+              ref={canvasRef}
+              width={400}
+              height={120}
+              onMouseDown={startDraw}
+              onMouseMove={draw}
+              onMouseUp={stopDraw}
+              onMouseLeave={stopDraw}
+              onTouchStart={startDraw}
+              onTouchMove={draw}
+              onTouchEnd={stopDraw}
+              style={{ width: '100%', height: 120, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'crosshair', touchAction: 'none' }}
+            />
+            <button onClick={clearCanvas} style={{ position: 'absolute', top: 4, right: 4, fontSize: 11, color: 'var(--text3)', padding: '2px 8px', borderRadius: 4, background: 'var(--surface)', border: '1px solid var(--border)' }}>Limpar</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setOpen(false)} style={{ padding: '10px 16px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 13 }}>Cancelar</button>
+            <button onClick={assinar} disabled={signing} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, background: '#22c55e', color: '#fff', fontSize: 13, fontWeight: 600, opacity: signing ? 0.6 : 1 }}>
+              {signing ? 'Assinando...' : 'Confirmar assinatura'}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>Ao assinar, sera registrado: nome, IP, data/hora e hash SHA-256 do documento.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
+  const oldLines = oldText.split('\n')
+  const newLines = newText.split('\n')
+  const result: { type: 'same' | 'removed' | 'added'; text: string }[] = []
+
+  // Simple LCS-based diff by lines
+  const oldSet = new Set(oldLines.map((l, i) => `${i}:${l}`))
+  const newSet = new Set(newLines.map((l, i) => `${i}:${l}`))
+
+  let oi = 0, ni = 0
+  while (oi < oldLines.length || ni < newLines.length) {
+    if (oi < oldLines.length && ni < newLines.length && oldLines[oi] === newLines[ni]) {
+      result.push({ type: 'same', text: oldLines[oi] })
+      oi++; ni++
+    } else {
+      // Check if old line exists ahead in new
+      const newAhead = newLines.indexOf(oldLines[oi], ni)
+      const oldAhead = oi < oldLines.length ? newLines.indexOf(oldLines[oi], ni) : -1
+
+      if (oldAhead === -1 && oi < oldLines.length) {
+        result.push({ type: 'removed', text: oldLines[oi] })
+        oi++
+      } else if (ni < newLines.length && oldLines.indexOf(newLines[ni], oi) === -1) {
+        result.push({ type: 'added', text: newLines[ni] })
+        ni++
+      } else if (newAhead !== -1 && newAhead - ni <= 3) {
+        while (ni < newAhead) { result.push({ type: 'added', text: newLines[ni] }); ni++ }
+      } else if (oi < oldLines.length) {
+        result.push({ type: 'removed', text: oldLines[oi] }); oi++
+      } else {
+        result.push({ type: 'added', text: newLines[ni] }); ni++
+      }
+    }
+  }
+
+  return (
+    <div style={{ fontSize: 13, lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace" }}>
+      {result.map((line, i) => (
+        <div key={i} style={{
+          padding: '2px 8px', borderRadius: 4, margin: '1px 0',
+          background: line.type === 'removed' ? 'rgba(239,68,68,0.1)' : line.type === 'added' ? 'rgba(34,197,94,0.1)' : 'transparent',
+          color: line.type === 'removed' ? '#f87171' : line.type === 'added' ? '#4ade80' : 'var(--text2)',
+          textDecoration: line.type === 'removed' ? 'line-through' : 'none',
+          borderLeft: line.type !== 'same' ? `3px solid ${line.type === 'removed' ? '#ef4444' : '#22c55e'}` : '3px solid transparent',
+        }}>
+          <span style={{ opacity: 0.5, marginRight: 8, userSelect: 'none' }}>{line.type === 'removed' ? '-' : line.type === 'added' ? '+' : ' '}</span>
+          {line.text || '\u00A0'}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function ResultSection({ contrato, setContrato, tipoNome, docId, canDownload, isMensal, checkingOut, handleCheckout, onNewDoc, error, setError }: {
   contrato: string; setContrato: (v: string) => void; tipoNome: string; docId: string | null
   canDownload: boolean; isMensal: boolean; checkingOut: boolean
@@ -285,6 +489,8 @@ function ResultSection({ contrato, setContrato, tipoNome, docId, canDownload, is
   const [editPrompt, setEditPrompt] = useState('')
   const [editing, setEditing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [prevVersion, setPrevVersion] = useState<string | null>(null)
+  const [showDiff, setShowDiff] = useState(false)
   const fileName = tipoNome.replace(/[^a-zA-Z0-9 ]/g, '').trim()
 
   const previewText = canDownload ? contrato : contrato.slice(0, Math.floor(contrato.length * 0.3))
@@ -352,8 +558,10 @@ ${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
       })
       const data = await res.json()
       if (data.contrato) {
+        setPrevVersion(contrato)
         setContrato(data.contrato)
         setEditPrompt('')
+        setShowDiff(true)
       } else {
         setError(data.error || 'Erro ao editar')
       }
@@ -391,6 +599,11 @@ ${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
         <button onClick={onNewDoc} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500 }}>
           + Novo
         </button>
+        {prevVersion && (
+          <button onClick={() => setShowDiff(!showDiff)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: showDiff ? 'rgba(168,85,247,0.15)' : 'var(--surface)', border: `1px solid ${showDiff ? 'rgba(168,85,247,0.3)' : 'var(--border)'}`, color: showDiff ? '#a855f7' : 'var(--text2)', fontSize: 14, fontWeight: 500 }}>
+            {showDiff ? 'Ver documento' : 'Ver alteracoes'}
+          </button>
+        )}
       </div>
 
       {/* Paywall */}
@@ -439,17 +652,30 @@ ${contrato.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}
         <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 6 }}>Descreva o que quer mudar e a IA vai ajustar o contrato</p>
       </div>
 
-      {/* Contract preview/full */}
-      <div style={{ position: 'relative' }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '32px', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.8, color: 'var(--text)', fontFamily: "'Inter',sans-serif", maxHeight: '70vh', overflowY: 'auto' }}>
-          {previewText}
-        </div>
-        {!canDownload && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(transparent, var(--bg) 80%)', borderRadius: '0 0 14px 14px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 20 }}>
-            <span style={{ fontSize: 13, color: 'var(--text3)', fontStyle: 'italic' }}>Mostrando 30% do documento — pague para ver completo</span>
+      {/* Assinatura digital */}
+      {canDownload && docId && <SignatureSection docId={docId} />}
+
+      {/* Contract preview/full or Diff view */}
+      {showDiff && prevVersion ? (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, fontSize: 12, color: 'var(--text3)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}/> Removido</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)' }}/> Adicionado</span>
           </div>
-        )}
-      </div>
+          <DiffView oldText={prevVersion} newText={contrato} />
+        </div>
+      ) : (
+        <div style={{ position: 'relative' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '32px', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.8, color: 'var(--text)', fontFamily: "'Inter',sans-serif", maxHeight: '70vh', overflowY: 'auto' }}>
+            {previewText}
+          </div>
+          {!canDownload && (
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(transparent, var(--bg) 80%)', borderRadius: '0 0 14px 14px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 20 }}>
+              <span style={{ fontSize: 13, color: 'var(--text3)', fontStyle: 'italic' }}>Mostrando 30% do documento — pague para ver completo</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
