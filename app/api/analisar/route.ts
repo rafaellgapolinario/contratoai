@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
+// Gemini extrai texto de PDFs (pdf-parse nao funciona em Next.js server bundles)
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -34,21 +35,15 @@ export async function POST(req: NextRequest) {
     if (file) {
       const buffer = Buffer.from(await file.arrayBuffer())
       if (file.type === 'application/pdf' || file.name?.endsWith('.pdf')) {
-        try {
-          const pdfParse = (await import('pdf-parse') as any).default || (await import('pdf-parse'))
-          const data = await pdfParse(buffer)
-          contrato = data.text || ''
-        } catch {
-          // Fallback Gemini
-          const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-          const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
-          const base64 = buffer.toString('base64')
-          const result = await model.generateContent([
-            { inlineData: { mimeType: 'application/pdf', data: base64 } },
-            'Extraia TODO o texto deste PDF. Retorne apenas o texto.',
-          ])
-          contrato = result.response.text()
-        }
+        // Usar Gemini pra extrair texto do PDF
+        const genAI = new GoogleGenerativeAI(GEMINI_KEY)
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
+        const base64 = buffer.toString('base64')
+        const result = await model.generateContent([
+          { inlineData: { mimeType: 'application/pdf', data: base64 } },
+          'Extraia TODO o texto deste PDF. Mantenha a formatacao. Retorne apenas o texto, sem comentarios.',
+        ])
+        contrato = result.response.text()
       } else {
         contrato = buffer.toString('utf-8')
       }

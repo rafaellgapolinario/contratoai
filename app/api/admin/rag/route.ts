@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getAdminFromHeader } from '@/lib/admin'
+// pdf-parse nao funciona em Next.js server bundles, usa Gemini pra extrair texto de PDFs
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -33,16 +34,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer())
 
       if (file.type === 'application/pdf' || filename.endsWith('.pdf')) {
-        // Extrair texto do PDF
-        try {
-          const pdfParse = (await import('pdf-parse') as any).default || (await import('pdf-parse'))
-          const data = await pdfParse(buffer)
-          content = data.text || ''
-        } catch (e: any) {
-          console.error('[rag] pdf-parse falhou, tentando Gemini:', e.message)
-          // Fallback: usar Gemini pra extrair texto
-          content = await extractWithGemini(buffer)
-        }
+        content = await extractWithGemini(buffer)
       } else {
         // Texto puro
         content = buffer.toString('utf-8')
@@ -53,8 +45,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Envie um arquivo ou texto' }, { status: 400 })
     }
 
-    if (!content.trim() || content.length < 50) {
-      return NextResponse.json({ error: 'Conteudo muito curto ou vazio' }, { status: 400 })
+    if (!content.trim() || content.length < 30) {
+      return NextResponse.json({ error: 'Conteudo muito curto ou vazio. Minimo 30 caracteres.' }, { status: 400 })
     }
 
     // Limitar a 500KB de texto
@@ -124,13 +116,13 @@ function splitIntoChunks(text: string, maxLen: number): string[] {
     if (!trimmed) continue
 
     if (current.length + trimmed.length + 2 > maxLen) {
-      if (current.length >= 100) chunks.push(current.trim())
+      if (current.length >= 30) chunks.push(current.trim())
       current = trimmed
     } else {
       current += (current ? '\n\n' : '') + trimmed
     }
   }
-  if (current.length >= 100) chunks.push(current.trim())
+  if (current.length >= 30) chunks.push(current.trim())
 
   // Se poucos chunks (texto sem paragrafos), split por sentenca
   if (chunks.length === 0) {
@@ -138,13 +130,13 @@ function splitIntoChunks(text: string, maxLen: number): string[] {
     current = ''
     for (const s of sentences) {
       if (current.length + s.length + 1 > maxLen) {
-        if (current.length >= 100) chunks.push(current.trim())
+        if (current.length >= 30) chunks.push(current.trim())
         current = s
       } else {
         current += (current ? ' ' : '') + s
       }
     }
-    if (current.length >= 100) chunks.push(current.trim())
+    if (current.length >= 30) chunks.push(current.trim())
   }
 
   return chunks
