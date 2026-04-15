@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getAdminFromHeader } from '@/lib/admin'
-// pdf-parse nao funciona em Next.js server bundles, usa Gemini pra extrair texto de PDFs
+import { execSync } from 'child_process'
+import { writeFileSync, readFileSync, unlinkSync } from 'fs'
+import path from 'path'
 
+export const maxDuration = 300 // 5 min timeout
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
 // GET — lista documentos
@@ -23,6 +26,7 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
 
   try {
+    console.log('[rag] iniciando upload...')
     const formData = await req.formData()
     const file = formData.get('file') as File | null
     const textContent = formData.get('text') as string | null
@@ -31,10 +35,17 @@ export async function POST(req: NextRequest) {
     let content = ''
 
     if (file) {
+      console.log(`[rag] arquivo recebido: ${filename} (${file.size} bytes, ${file.type})`)
+      // Limite 20MB
+      if (file.size > 20 * 1024 * 1024) {
+        return NextResponse.json({ error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximo 20MB.` }, { status: 400 })
+      }
       const buffer = Buffer.from(await file.arrayBuffer())
 
       if (file.type === 'application/pdf' || filename.endsWith('.pdf')) {
-        content = await extractWithGemini(buffer)
+        console.log('[rag] extraindo texto do PDF...')
+        content = await extractPdfText(buffer)
+        console.log(`[rag] texto extraido: ${content.length} chars`)
       } else {
         // Texto puro
         content = buffer.toString('utf-8')
@@ -105,6 +116,32 @@ export async function DELETE(req: NextRequest) {
 }
 
 // --- Helpers ---
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  // Metodo 1: pdf-parse via script externo (rapido, 1-2s)
+  try {
+    const tmpIn = `/tmp/pdf-${Date.now()}.pdf`
+    const tmpOut = `/tmp/pdf-${Date.now()}.txt`
+    writeFileSync(tmpIn, buffer)
+    const result = execSync(`node /root/contratoai/scripts/extract-pdf.mjs "${tmpIn}" "${tmpOut}"`, {
+      timeout: 60000,
+      encoding: 'utf-8',
+    })
+    const text = readFileSync(tmpOut, 'utf-8')
+    try { unlinkSync(tmpIn) } catch {}
+    try { unlinkSync(tmpOut) } catch {}
+    if (text.length > 30) {
+      console.log('[rag] pdf-parse OK via script externo')
+      return text
+    }
+  } catch (e: any) {
+    console.log('[rag] pdf-parse script falhou:', e.message?.slice(0, 100))
+  }
+
+  // Metodo 2: Gemini (fallback, mais lento)
+  console.log('[rag] usando Gemini pra extrair texto...')
+  return extractWithGemini(buffer)
+}
 
 function splitIntoChunks(text: string, maxLen: number): string[] {
   const paragraphs = text.split(/\n\s*\n/)

@@ -88,7 +88,8 @@ export default function AdminPage() {
       form.append('file', file)
       form.append('filename', file.name)
 
-      setUploadProgress('Processando documento, extraindo texto, gerando embeddings... pode levar ate 1 minuto')
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1)
+      setUploadProgress(`Processando ${file.name} (${sizeMB}MB)... Extraindo texto e gerando embeddings. PDFs grandes podem levar ate 3 minutos.`)
       const res = await fetch('/api/admin/rag', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
