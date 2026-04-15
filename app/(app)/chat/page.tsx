@@ -106,32 +106,22 @@ export default function ChatPage() {
         @media(max-width:768px) { .chat-msg { max-width: 95%; } }
       `}</style>
 
-      {/* Nav */}
-      <nav style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border)', background: 'rgba(9,9,15,0.95)', backdropFilter: 'blur(20px)', flexShrink: 0 }}>
-        <div style={{ maxWidth: 800, width: '100%', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="/painel" style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            </Link>
-            <div>
-              <h1 style={{ fontSize: 16, fontFamily: "'Space Grotesk',sans-serif" }}>Consulta Juridica</h1>
-              <p style={{ fontSize: 11, color: 'var(--text3)' }}>Pergunte sobre nossos documentos</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {!isMensal && (
-              <span style={{ fontSize: 11, color: 'var(--text3)', padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.04)' }}>
-                3 perguntas/dia
-              </span>
-            )}
-            {messages.length > 0 && (
-              <button onClick={clearHistory} style={{ fontSize: 12, color: 'var(--text3)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
-                Limpar
+      {/* Header */}
+      <div style={{ height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <h1 style={{ fontSize: 16, fontFamily: "'Space Grotesk',sans-serif" }}>Consulta Juridica</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {!isMensal && (
+            <span style={{ fontSize: 11, color: 'var(--text3)', padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.04)' }}>
+              3 perguntas/dia
+            </span>
+          )}
+          {messages.length > 0 && (
+            <button onClick={clearHistory} style={{ fontSize: 12, color: 'var(--text3)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
+              Limpar
               </button>
             )}
           </div>
         </div>
-      </nav>
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>

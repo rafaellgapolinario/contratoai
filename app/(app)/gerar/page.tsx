@@ -168,7 +168,7 @@ function GerarContent() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '80px 24px 40px' }}>
+    <div style={{ minHeight: '100vh', padding: '32px 24px 40px' }}>
       <style>{`
         .field-input { width:100%; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; transition:all 0.2s; }
         .field-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(59,130,246,0.15); outline:none; }
@@ -180,14 +180,9 @@ function GerarContent() {
 
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-          <Link href={typeof window !== 'undefined' && localStorage.getItem('cai_token') ? '/painel' : '/'} style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          </Link>
-          <div>
-            <h1 style={{ fontSize: 24 }}>Gerar documento</h1>
-            {tipoNome && step !== 'select' && <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>{tipoNome}</p>}
-          </div>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 24 }}>Gerar documento</h1>
+          {tipoNome && step !== 'select' && <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>{tipoNome}</p>}
         </div>
 
         {/* Step: Select tipo */}

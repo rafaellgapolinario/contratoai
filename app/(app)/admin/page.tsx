@@ -137,16 +137,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Nav */}
-      <nav style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border)', background: 'rgba(9,9,15,0.95)', backdropFilter: 'blur(20px)' }}>
-        <div style={{ maxWidth: 1000, width: '100%', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/painel" style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg,var(--blue),var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#fff' }}>C</div>
-            ContratoAI
-          </Link>
-          <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 99, background: isMaster ? 'rgba(168,85,247,0.15)' : 'rgba(239,68,68,0.15)', color: isMaster ? '#a855f7' : '#f87171' }}>{isMaster ? 'MASTER' : 'ADMIN'}</span>
-        </div>
-      </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px' }}>
         <h1 style={{ fontSize: 24, fontFamily: "'Space Grotesk',sans-serif", marginBottom: 8 }}>Painel Admin</h1>
