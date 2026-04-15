@@ -61,43 +61,54 @@ export default function AdminPage() {
   }
 
   const fetchDocs = async () => {
+    const token = getToken()
+    if (!token) { setError('Token nao encontrado. Faca login novamente.'); setLoading(false); return }
     try {
-      const res = await fetch('/api/admin/rag', { headers: { Authorization: `Bearer ${getToken()}` } })
+      const res = await fetch('/api/admin/rag', { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json()
-      if (data.error) { setError(data.error); setLoading(false); return }
+      if (data.error) {
+        if (data.error === 'Acesso negado') setError('Acesso negado. Sua conta nao tem permissao de admin.')
+        else setError(data.error)
+        setLoading(false); return
+      }
       setDocs(data.documents || [])
+      setError('')
     } catch { setError('Erro ao carregar documentos') }
     setLoading(false)
   }
 
   const uploadFile = async (file: File) => {
+    const token = getToken()
+    if (!token) { setError('Voce precisa estar logado. Faca login novamente.'); return }
     setUploading(true)
-    setUploadProgress('Enviando arquivo...')
+    setUploadProgress(`Enviando ${file.name} (${(file.size / 1024).toFixed(0)}KB)...`)
     setError('')
     try {
       const form = new FormData()
       form.append('file', file)
       form.append('filename', file.name)
 
-      setUploadProgress('Processando PDF, extraindo texto, gerando embeddings... pode levar ate 1 minuto')
+      setUploadProgress('Processando documento, extraindo texto, gerando embeddings... pode levar ate 1 minuto')
       const res = await fetch('/api/admin/rag', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: form,
       })
       const data = await res.json()
-      if (data.error) { setError(data.error); setUploading(false); setUploadProgress(''); return }
+      if (data.error) { setError(`Erro: ${data.error}`); setUploading(false); setUploadProgress(''); return }
 
-      setUploadProgress(`Pronto! ${data.document.chunks} trechos indexados.`)
-      setTimeout(() => { setUploadProgress(''); fetchDocs() }, 2000)
-    } catch { setError('Erro no upload') }
+      setUploadProgress(`Pronto! ${data.document.chunks} trechos indexados de "${data.document.filename}".`)
+      setTimeout(() => { setUploadProgress(''); fetchDocs() }, 3000)
+    } catch (e: any) { setError(`Erro no upload: ${e.message || 'conexao falhou'}`) }
     setUploading(false)
   }
 
   const uploadText = async () => {
     if (!textContent.trim() || !textFilename.trim()) { setError('Preencha nome e conteudo'); return }
+    const token = getToken()
+    if (!token) { setError('Faca login novamente'); return }
     setUploading(true)
-    setUploadProgress('Processando texto...')
+    setUploadProgress('Processando texto e gerando embeddings...')
     setError('')
     try {
       const form = new FormData()
@@ -106,11 +117,11 @@ export default function AdminPage() {
 
       const res = await fetch('/api/admin/rag', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
         body: form,
       })
       const data = await res.json()
-      if (data.error) { setError(data.error); setUploading(false); setUploadProgress(''); return }
+      if (data.error) { setError(`Erro: ${data.error}`); setUploading(false); setUploadProgress(''); return }
 
       setUploadProgress(`Pronto! ${data.document.chunks} trechos indexados.`)
       setTextContent('')
