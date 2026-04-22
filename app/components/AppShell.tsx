@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'painel', href: '/painel', label: 'Painel', icon: <svg {...iconProps}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> },
   { id: 'gerar', href: '/gerar', label: 'Gerar Documento', icon: <svg {...iconProps}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M12 12v6"/><path d="M9 15h6"/></svg> },
   { id: 'chat', href: '/chat', label: 'Consulta Juridica', icon: <svg {...iconProps}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+  { id: 'assistente', href: '/assistente', label: 'Assistente IA', icon: <svg {...iconProps}><path d="M12 2l2.4 5.6L20 9l-4 4 .9 5.6L12 16l-4.9 2.6.9-5.6-4-4 5.6-1.4L12 2z"/></svg> },
   { id: 'analisar', href: '/analisar', label: 'Analise de Risco', icon: <svg {...iconProps}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> },
   { id: 'jurisprudencia', href: '/jurisprudencia', label: 'Jurisprudencia', icon: <svg {...iconProps}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
   { id: 'teses', href: '/teses', label: 'Base de Teses', icon: <svg {...iconProps}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> },
