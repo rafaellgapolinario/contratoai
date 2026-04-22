@@ -88,6 +88,13 @@ export default function LoginPage() {
                   {showPassword ? 'Ocultar' : 'Ver'}
                 </button>
               </div>
+              {mode === 'login' && (
+                <div style={{ textAlign: 'right', marginTop: 6 }}>
+                  <Link href="/esqueci-senha" style={{ fontSize: 12.5, color: 'var(--blue-light)', fontWeight: 500 }}>
+                    Esqueci minha senha
+                  </Link>
+                </div>
+              )}
             </div>
 
             {mode === 'signup' && (
