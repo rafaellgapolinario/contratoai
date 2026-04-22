@@ -115,21 +115,6 @@ export default function ChatPage() {
               3 perguntas/dia
             </span>
           )}
-          {messages.length > 0 && (
-            <button
-              onClick={clearHistory}
-              title="Limpar todo o histórico de conversa"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, color: '#f87171', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', cursor: 'pointer' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-              Limpar chat
-            </button>
-          )}
           </div>
         </div>
 
@@ -199,6 +184,22 @@ export default function ChatPage() {
       {/* Input */}
       <div style={{ borderTop: '1px solid var(--border)', padding: '16px 24px', background: 'rgba(9,9,15,0.95)', backdropFilter: 'blur(20px)', flexShrink: 0 }}>
         <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', gap: 10 }}>
+          {messages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              disabled={loading}
+              title="Limpar histórico da conversa"
+              aria-label="Limpar chat"
+              style={{ padding: '0 14px', borderRadius: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, flexShrink: 0 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          )}
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
