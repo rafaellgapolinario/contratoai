@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
+import { searchRelevantChunks } from '@/lib/rag'
 import { execSync } from 'child_process'
 import { writeFileSync, readFileSync, unlinkSync } from 'fs'
 
@@ -68,8 +69,17 @@ export async function POST(req: NextRequest) {
     }
     if (contrato.length > 100000) contrato = contrato.slice(0, 100000)
 
+    // RAG primeiro
+    const rag = await searchRelevantChunks(contrato.slice(0, 3000), 6)
+    const usedWeb = !rag.hasEnoughEvidence
+    const baseContexto = rag.hasEnoughEvidence
+      ? `\n\nLEGISLACAO / JURISPRUDENCIA DA BASE INTERNA (use como referencia prioritaria ao apontar riscos e clausulas):\n\n${rag.context}\n`
+      : ''
+
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
+    const modelConfig: any = { model: 'gemini-3.1-flash-lite-preview' }
+    if (usedWeb) modelConfig.tools = [{ googleSearch: {} }]
+    const model = genAI.getGenerativeModel(modelConfig)
 
     const prompt = `Voce e um advogado brasileiro especialista em analise de contratos. Analise o contrato abaixo e retorne um JSON valido com a seguinte estrutura EXATA (sem markdown, sem code blocks, apenas JSON puro):
 
@@ -94,7 +104,7 @@ REGRAS:
 - Identifique clausulas abusivas (Art. 51 CDC), prazos fora do padrao legal, multas excessivas
 - Verifique se tem: objeto, obrigacoes, prazo, pagamento, rescisao, foro, penalidades
 - Score 90-100: contrato muito seguro. 70-89: bom com ajustes. 50-69: problemas relevantes. 0-49: riscos graves
-- Retorne APENAS o JSON, sem texto adicional
+- Retorne APENAS o JSON, sem texto adicional${baseContexto}${usedWeb ? '\n- A base interna nao tem material suficiente, use seu conhecimento juridico atualizado e, se disponivel, pesquise na web por jurisprudencia vigente.' : '\n- Priorize a LEGISLACAO / JURISPRUDENCIA DA BASE INTERNA acima ao fundamentar os problemas.'}
 
 CONTRATO:
 ${contrato}`
@@ -125,7 +135,12 @@ ${contrato}`
       [payload.id, contrato.slice(0, 500), analise.score, analise.nivel, JSON.stringify(analise)]
     )
 
-    return NextResponse.json({ ok: true, analise })
+    return NextResponse.json({
+      ok: true,
+      analise,
+      sources: rag.sources,
+      mode: rag.hasEnoughEvidence ? 'base' : 'web',
+    })
   } catch (e: any) {
     console.error('[analisar] erro:', e.message)
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })

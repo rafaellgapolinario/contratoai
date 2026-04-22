@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
+import { searchRelevantChunks } from '@/lib/rag'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -153,14 +154,25 @@ export async function POST(req: NextRequest) {
 - O contrato deve ter entre 800 e 2000 palavras dependendo da complexidade`
     }
 
+    // 1) Buscar base RAG primeiro
+    const ragQuery = `${template.nome} ${camposPreenchidos.slice(0, 1500)}`
+    const rag = await searchRelevantChunks(ragQuery, 6)
+    const usedWeb = !rag.hasEnoughEvidence
+
+    const baseContexto = rag.hasEnoughEvidence
+      ? `\n\nDOCUMENTOS DA BASE INTERNA (use como referencia prioritaria de clausulas, modelos e legislacao):\n\n${rag.context}\n`
+      : ''
+
     const prompt = `Você é um advogado brasileiro especialista em direito civil, trabalhista e processual. Gere um "${template.nome}" completo, profissional e juridicamente válido com base nestas informações:
 
 ${camposPreenchidos}
 
-${regras}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtra}` : ''}`
+${regras}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtra}` : ''}${baseContexto}${usedWeb ? '\n\nA base interna nao tem material suficiente sobre este tipo de documento. Use seu conhecimento juridico atualizado e, se disponivel, pesquise na web por modelos e legislacao vigente.' : ''}`
 
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
+    const modelConfig: any = { model: 'gemini-3.1-flash-lite-preview' }
+    if (usedWeb) modelConfig.tools = [{ googleSearch: {} }]
+    const model = genAI.getGenerativeModel(modelConfig)
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
@@ -175,7 +187,13 @@ ${regras}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtr
       docId = rows[0]?.id
     }
 
-    return NextResponse.json({ contrato: text, tipo: template.nome, docId })
+    return NextResponse.json({
+      contrato: text,
+      tipo: template.nome,
+      docId,
+      sources: rag.sources,
+      mode: rag.hasEnoughEvidence ? 'base' : 'web',
+    })
   } catch (e: any) {
     console.error('Erro ao gerar contrato:', e)
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })

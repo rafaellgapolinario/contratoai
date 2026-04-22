@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
+import { searchRelevantChunks } from '@/lib/rag'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -28,13 +29,22 @@ export async function POST(req: NextRequest) {
     const { tema, area } = await req.json()
     if (!tema?.trim()) return NextResponse.json({ error: 'Informe o tema da pesquisa' }, { status: 400 })
 
+    // RAG primeiro
+    const rag = await searchRelevantChunks(`${tema} ${area || ''}`.trim(), 6)
+    const usedWeb = !rag.hasEnoughEvidence
+    const baseContexto = rag.hasEnoughEvidence
+      ? `\n\nDECISOES / SUMULAS DA BASE INTERNA (use como referencia prioritaria):\n\n${rag.context}\n`
+      : ''
+
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
+    const modelConfig: any = { model: 'gemini-3.1-flash-lite-preview' }
+    if (usedWeb) modelConfig.tools = [{ googleSearch: {} }]
+    const model = genAI.getGenerativeModel(modelConfig)
 
     const prompt = `Voce e um pesquisador juridico brasileiro especialista em jurisprudencia. Pesquise e retorne decisoes judiciais relevantes sobre o tema abaixo.
 
 TEMA: ${tema}
-${area ? `AREA DO DIREITO: ${area}` : ''}
+${area ? `AREA DO DIREITO: ${area}` : ''}${baseContexto}${usedWeb ? '\n\nA base interna nao tem material suficiente, use seu conhecimento e pesquise na web decisoes recentes de tribunais brasileiros (STF, STJ, TJs).' : '\n\nPriorize as DECISOES / SUMULAS DA BASE INTERNA acima ao montar a resposta.'}
 
 Retorne um JSON valido com a seguinte estrutura (sem markdown, sem code blocks, apenas JSON puro):
 
@@ -87,7 +97,12 @@ REGRAS:
       [payload.id, tema, area || null, dados.total_resultados || dados.decisoes?.length || 0]
     )
 
-    return NextResponse.json({ ok: true, dados })
+    return NextResponse.json({
+      ok: true,
+      dados,
+      sources: rag.sources,
+      mode: rag.hasEnoughEvidence ? 'base' : 'web',
+    })
   } catch (e: any) {
     console.error('[jurisprudencia] erro:', e.message)
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })
