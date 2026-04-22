@@ -36,6 +36,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('cai_user') : null
     if (userStr) { try { setUser(JSON.parse(userStr)) } catch {} }
+
+    // Sincroniza com o banco pra refletir plano/upgrade feitos fora do fluxo de login
+    const token = typeof window !== 'undefined' ? localStorage.getItem('cai_token') : null
+    if (!token) return
+    fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.user) {
+          setUser(d.user)
+          try { localStorage.setItem('cai_user', JSON.stringify(d.user)) } catch {}
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email)
