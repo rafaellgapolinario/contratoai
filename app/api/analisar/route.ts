@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
 import { searchRelevantChunks } from '@/lib/rag'
+import { getDateContext } from '@/lib/date-context'
 import { execSync } from 'child_process'
 import { writeFileSync, readFileSync, unlinkSync } from 'fs'
 
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
     // RAG primeiro
     const rag = await searchRelevantChunks(contrato.slice(0, 3000), 6)
     const usedWeb = !rag.hasEnoughEvidence
+    const { bloco: dateCtx } = getDateContext()
     const baseContexto = rag.hasEnoughEvidence
       ? `\n\nLEGISLACAO / JURISPRUDENCIA DA BASE INTERNA (use como referencia prioritaria ao apontar riscos e clausulas):\n\n${rag.context}\n`
       : ''
@@ -104,7 +106,9 @@ REGRAS:
 - Identifique clausulas abusivas (Art. 51 CDC), prazos fora do padrao legal, multas excessivas
 - Verifique se tem: objeto, obrigacoes, prazo, pagamento, rescisao, foro, penalidades
 - Score 90-100: contrato muito seguro. 70-89: bom com ajustes. 50-69: problemas relevantes. 0-49: riscos graves
-- Retorne APENAS o JSON, sem texto adicional${baseContexto}${usedWeb ? '\n- A base interna nao tem material suficiente, use seu conhecimento juridico atualizado e, se disponivel, pesquise na web por jurisprudencia vigente.' : '\n- Priorize a LEGISLACAO / JURISPRUDENCIA DA BASE INTERNA acima ao fundamentar os problemas.'}
+- Retorne APENAS o JSON, sem texto adicional${baseContexto}${usedWeb ? '\n- A base interna nao tem material suficiente, pesquise na web priorizando jurisprudencia e legislacao do ano corrente (depois anos anteriores em ordem decrescente).' : '\n- Priorize a LEGISLACAO / JURISPRUDENCIA DA BASE INTERNA acima ao fundamentar os problemas.'}
+
+${dateCtx}
 
 CONTRATO:
 ${contrato}`

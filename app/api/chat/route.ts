@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
+import { getDateContext } from '@/lib/date-context'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
     // Gerar resposta com Gemini
     const chatModel = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' })
 
+    const { bloco: dateCtx } = getDateContext()
     const systemPrompt = `Voce e um assistente juridico especializado em legislacao brasileira. Voce responde perguntas dos usuarios com base EXCLUSIVAMENTE nos documentos fornecidos abaixo.
 
 REGRAS:
@@ -100,6 +102,8 @@ REGRAS:
 - NAO invente informacoes que nao estao nos documentos
 - Se a pergunta nao tem relacao com os documentos, explique que voce so pode ajudar com base nos documentos disponíveis
 - IMPORTANTE: Voce NAO e advogado e NAO substitui assessoria juridica profissional. Deixe isso claro quando relevante.
+
+${dateCtx}
 
 ${context ? `DOCUMENTOS DISPONIVEIS:\n\n${context}` : 'Nenhum documento encontrado para esta consulta.'}
 

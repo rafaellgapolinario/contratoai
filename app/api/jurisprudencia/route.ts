@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
 import { searchRelevantChunks } from '@/lib/rag'
+import { getDateContext } from '@/lib/date-context'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -29,22 +30,27 @@ export async function POST(req: NextRequest) {
     const { tema, area } = await req.json()
     if (!tema?.trim()) return NextResponse.json({ error: 'Informe o tema da pesquisa' }, { status: 400 })
 
-    // RAG primeiro
+    // RAG + googleSearch SEMPRE ligado nessa rota (jurisprudencia muda mes a mes)
     const rag = await searchRelevantChunks(`${tema} ${area || ''}`.trim(), 6)
-    const usedWeb = !rag.hasEnoughEvidence
     const baseContexto = rag.hasEnoughEvidence
-      ? `\n\nDECISOES / SUMULAS DA BASE INTERNA (use como referencia prioritaria):\n\n${rag.context}\n`
+      ? `\n\nDECISOES / SUMULAS DA BASE INTERNA (use como referencia prioritaria, complementando com decisoes recentes da web):\n\n${rag.context}\n`
       : ''
+    const { bloco: dateCtx } = getDateContext()
 
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
-    const modelConfig: any = { model: 'gemini-3.1-flash-lite-preview' }
-    if (usedWeb) modelConfig.tools = [{ googleSearch: {} }]
-    const model = genAI.getGenerativeModel(modelConfig)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3.1-flash-lite-preview',
+      tools: [{ googleSearch: {} }] as any,
+    })
 
     const prompt = `Voce e um pesquisador juridico brasileiro especialista em jurisprudencia. Pesquise e retorne decisoes judiciais relevantes sobre o tema abaixo.
 
 TEMA: ${tema}
-${area ? `AREA DO DIREITO: ${area}` : ''}${baseContexto}${usedWeb ? '\n\nA base interna nao tem material suficiente, use seu conhecimento e pesquise na web decisoes recentes de tribunais brasileiros (STF, STJ, TJs).' : '\n\nPriorize as DECISOES / SUMULAS DA BASE INTERNA acima ao montar a resposta.'}
+${area ? `AREA DO DIREITO: ${area}` : ''}${baseContexto}
+
+${dateCtx}
+
+IMPORTANTE: pesquise na web decisoes dos tribunais brasileiros (STF, STJ, TJs, TRFs, TRTs) publicadas no ano corrente. Se nao houver, cai para anos anteriores em ordem decrescente. Se a base interna tiver material relevante acima, use como ponto de partida e complete com decisoes recentes da web.
 
 Retorne um JSON valido com a seguinte estrutura (sem markdown, sem code blocks, apenas JSON puro):
 
@@ -101,7 +107,7 @@ REGRAS:
       ok: true,
       dados,
       sources: rag.sources,
-      mode: rag.hasEnoughEvidence ? 'base' : 'web',
+      mode: rag.hasEnoughEvidence ? 'base+web' : 'web',
     })
   } catch (e: any) {
     console.error('[jurisprudencia] erro:', e.message)

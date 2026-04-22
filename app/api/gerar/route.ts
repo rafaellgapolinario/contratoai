@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { query } from '@/lib/db'
 import { getTokenFromHeader } from '@/lib/jwt'
 import { searchRelevantChunks } from '@/lib/rag'
+import { getDateContext } from '@/lib/date-context'
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || ''
 
@@ -163,11 +164,14 @@ export async function POST(req: NextRequest) {
       ? `\n\nDOCUMENTOS DA BASE INTERNA (use como referencia prioritaria de clausulas, modelos e legislacao):\n\n${rag.context}\n`
       : ''
 
+    const { bloco: dateCtx } = getDateContext()
     const prompt = `Você é um advogado brasileiro especialista em direito civil, trabalhista e processual. Gere um "${template.nome}" completo, profissional e juridicamente válido com base nestas informações:
 
 ${camposPreenchidos}
 
-${regras}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtra}` : ''}${baseContexto}${usedWeb ? '\n\nA base interna nao tem material suficiente sobre este tipo de documento. Use seu conhecimento juridico atualizado e, se disponivel, pesquise na web por modelos e legislacao vigente.' : ''}`
+${regras}
+
+${dateCtx}${promptExtra ? `\n\nINSTRUÇÕES ADICIONAIS DO USUÁRIO:\n${promptExtra}` : ''}${baseContexto}${usedWeb ? '\n\nA base interna nao tem material suficiente sobre este tipo de documento. Pesquise na web por modelos e legislacao vigente (priorize o ano corrente, depois anos anteriores em ordem decrescente).' : ''}`
 
     const genAI = new GoogleGenerativeAI(GEMINI_KEY)
     const modelConfig: any = { model: 'gemini-3.1-flash-lite-preview' }
