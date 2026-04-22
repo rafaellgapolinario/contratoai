@@ -116,10 +116,20 @@ export default function ChatPage() {
             </span>
           )}
           {messages.length > 0 && (
-            <button onClick={clearHistory} style={{ fontSize: 12, color: 'var(--text3)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
-              Limpar
-              </button>
-            )}
+            <button
+              onClick={clearHistory}
+              title="Limpar todo o histórico de conversa"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, color: '#f87171', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', cursor: 'pointer' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+              Limpar chat
+            </button>
+          )}
           </div>
         </div>
 
